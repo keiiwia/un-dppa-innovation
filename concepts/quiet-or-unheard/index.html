@@ -1,0 +1,466 @@
+<title>Quiet or Unheard?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. The question and concept open the page; the map and the flow are the two interactive moments. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --sunk: #e9edf1;
+  --ink: #18212c;
+  --muted: #5a6878;
+  --line: #d3dae2;
+  --accent: #2f5fd0;
+  --accent-soft: #e3eafb;
+  --quiet: #7fa891;
+  --unheard: #9aa6b4;
+  --alert: #d0612a;
+  --draft: #8a5a00;
+  --draft-bg: #fff3d6;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d; --surface: #1a2129; --sunk: #151b22; --ink: #e6ebf0; --muted: #9aa8b6; --line: #2e3844;
+    --accent: #7ea2ff; --accent-soft: #1f2a44; --quiet: #6f9c84; --unheard: #66727f; --alert: #f08a55;
+    --draft: #ffcf70; --draft-bg: #3a2e12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --sunk: #151b22; --ink: #e6ebf0; --muted: #9aa8b6; --line: #2e3844;
+  --accent: #7ea2ff; --accent-soft: #1f2a44; --quiet: #6f9c84; --unheard: #66727f; --alert: #f08a55;
+  --draft: #ffcf70; --draft-bg: #3a2e12; color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 64px; }
+section { display: grid; gap: 18px; min-width: 0; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2.2rem, 5.5vw, 3.2rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 1.45rem; font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 700; }
+p { margin: 0; max-width: 65ch; }
+a { color: var(--accent); }
+.label { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.hint { font-size: 0.85rem; color: var(--muted); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Opening: title, question, concept */
+.opening { display: grid; gap: 22px; }
+.draft {
+  justify-self: start; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--draft); background: var(--draft-bg); border: 1px dashed var(--draft); padding: 6px 10px; border-radius: 4px;
+}
+.titlebar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.question { display: grid; gap: 8px; }
+.question p {
+  font-family: var(--font-display); font-weight: 700; font-size: clamp(1.45rem, 3.4vw, 2.05rem);
+  line-height: 1.25; max-width: 32ch; text-wrap: balance;
+}
+.question em { font-style: normal; color: var(--accent); }
+.concept {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 22px 24px;
+  display: grid; gap: 12px;
+}
+.concept h2 { font-size: 1.25rem; }
+.concept p { font-size: 1.05rem; }
+.rules { display: flex; flex-wrap: wrap; gap: 8px; }
+.rule { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; }
+
+/* Scenario + map */
+.scenario { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.stack { display: grid; gap: 12px; min-width: 0; }
+.map { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.cell {
+  aspect-ratio: 1; max-width: 100%; border: 1px solid var(--line); border-radius: 3px; cursor: pointer; padding: 0; position: relative;
+  background: color-mix(in srgb, var(--quiet) 80%, var(--surface));
+}
+.cell.quiet { background: color-mix(in srgb, var(--quiet) 28%, var(--surface)); }
+.cell.unheard, .cell.contradicted {
+  background: repeating-linear-gradient(135deg, var(--surface) 0 4px, color-mix(in srgb, var(--unheard) 60%, var(--surface)) 4px 7px);
+}
+.cell.contradicted { border: 2px solid var(--alert); }
+.cell.contradicted::after { content: ""; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--alert); }
+.cell[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 1px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 14px; height: 14px; border-radius: 2px; border: 1px solid var(--line); display: inline-block; }
+.caption { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; min-height: 6em; }
+.caption strong { font-family: var(--font-display); }
+
+/* Flow */
+.flow-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px; }
+.switch { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.switch button { border: 0; background: transparent; padding: 7px 14px; cursor: pointer; font-size: 0.9rem; }
+.switch button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+
+/* Simple view: three phases */
+.phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+.phase-card {
+  position: relative; text-align: left; cursor: pointer; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 16px 18px; display: grid; gap: 6px; align-content: start;
+}
+.phase-card:not(:last-child)::after {
+  content: "→"; position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-family: var(--font-mono); pointer-events: none;
+}
+.num {
+  font-family: var(--font-mono); font-size: 0.8rem; width: 1.8em; height: 1.8em; border-radius: 50%;
+  display: inline-grid; place-items: center; border: 1px solid var(--line); color: var(--muted);
+}
+.phase-card .t { font-family: var(--font-display); font-weight: 700; font-size: 1.12rem; }
+.phase-card .s { font-size: 0.92rem; color: var(--muted); }
+
+/* Full view: eight steps on a timeline */
+.track { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px 8px; }
+.band {
+  grid-row: 1; grid-column: var(--from) / span var(--span);
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); border-bottom: 2px solid var(--line); padding-bottom: 6px;
+}
+.band b { color: var(--ink); font-weight: 500; }
+.tile {
+  grid-row: 2; grid-column: var(--col);
+  text-align: left; cursor: pointer; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 10px; display: grid; gap: 6px; align-content: start; min-width: 0;
+}
+.tile .t { font-family: var(--font-display); font-weight: 700; font-size: 0.98rem; overflow-wrap: anywhere; }
+
+.phase-card.active, .tile.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.phase-card.active .num, .tile.active .num { border-color: var(--accent); color: var(--accent); }
+
+.who {
+  justify-self: start; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted);
+}
+.who.person { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+.detail {
+  background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 20px 22px;
+  display: grid; gap: 10px; min-height: 13em; align-content: start;
+}
+.detail .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.detail .ex { font-size: 0.93rem; border-top: 1px dashed var(--line); padding-top: 10px; }
+.detail .ex .label { display: block; margin-bottom: 4px; }
+.whokey { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+
+/* Why we think it can work */
+.feeders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.feeder { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.feeder ul { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; font-size: 0.93rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; font-size: 0.88rem; cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.term { font-size: 0.93rem; background: var(--surface); border: 1px solid var(--line); padding: 10px 12px; border-radius: 6px; }
+
+ol.qs { margin: 0; padding-left: 1.3em; display: grid; gap: 10px; max-width: 65ch; }
+footer { border-top: 1px solid var(--line); padding-top: 18px; font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
+
+@media (max-width: 760px) {
+  .scenario, .feeders { grid-template-columns: minmax(0, 1fr); }
+  .phases { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .phase-card:not(:last-child)::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -22px; transform: translateX(-50%); }
+  .track { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .band, .tile { grid-row: auto; grid-column: auto; }
+  .band { margin-top: 10px; }
+  .tile { grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .phase-card, .tile, .cell, .chip { transition: border-color .15s, box-shadow .15s, background-color .15s; }
+}
+</style>
+
+<div class="wrap">
+
+  <section class="opening" aria-labelledby="title">
+    <span class="draft">Concept draft · for team discussion · not a finished design</span>
+    <div class="titlebar">
+      <h1 id="title">Quiet or Unheard?</h1>
+      <div class="meta">
+        <span class="label">Team E</span>
+        <span class="label">Territories 5 · 7 · 10</span>
+        <span class="label">For: UN analysts</span>
+      </div>
+    </div>
+
+    <div class="question">
+      <span class="label">Our question</span>
+      <p>How might we help UN analysts tell a <em>quiet</em> place from an <em>unheard</em> one, so early warning rests on an honest picture of what is and isn't known?</p>
+    </div>
+
+    <div class="concept">
+      <span class="label">Concept</span>
+      <h2>Silence as a data point</h2>
+      <p>Most tools work with the data you already have. This one measures the data you don't: it compares the reporting a place normally gets with what is arriving now, checks any silence against independent signals, and keeps that gap attached to the analysis all the way up to the envoy.</p>
+      <div class="rules">
+        <span class="rule">No trust scores</span>
+        <span class="rule">No verdicts</span>
+        <span class="rule">A person makes the call</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="scenario-h">
+    <span class="label">Scenario</span>
+    <h2 id="scenario-h">Two districts look the same on the map</h2>
+    <div class="scenario">
+      <div class="stack">
+        <p>A district in Cameroon's Northwest normally produces about 15 reports a month, including local-language community radio. This month there are 2, both in English, both from outlets in the capital. Satellite imagery shows newly burned farmland.</p>
+        <p>On a conflict map, few reports reads as calm. <strong>Is this district quiet, or is no one hearing it?</strong></p>
+        <p class="hint">Illustrative scenario with made-up numbers. Tap a district on the map.</p>
+      </div>
+      <div class="stack">
+        <div class="map" id="map" role="group" aria-label="Example district map"></div>
+        <div class="legend">
+          <span><i class="swatch" style="background:color-mix(in srgb, var(--quiet) 80%, var(--surface))"></i>Reported</span>
+          <span><i class="swatch" style="background:color-mix(in srgb, var(--quiet) 28%, var(--surface))"></i>Quiet</span>
+          <span><i class="swatch" style="background:repeating-linear-gradient(135deg, var(--surface) 0 3px, var(--unheard) 3px 5px)"></i>Unheard</span>
+          <span><i class="swatch" style="border:2px solid var(--alert)"></i>Silent, but changing</span>
+        </div>
+        <div class="caption" id="caption" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="f-h">
+    <div class="flow-head">
+      <div style="display:grid; gap:6px">
+        <span class="label">How it would work</span>
+        <h2 id="f-h">Find the gap → Check the silence → Carry it up</h2>
+      </div>
+      <div class="switch" role="group" aria-label="Level of detail">
+        <button id="v3" aria-pressed="true">3 steps</button>
+        <button id="v8" aria-pressed="false">8 steps</button>
+      </div>
+    </div>
+    <div id="flow"></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+    <div class="whokey hint">
+      <span>Hover or tap a step.</span>
+      <span><span class="who">Tool</span> the software does it</span>
+      <span><span class="who person">Person</span> an analyst decides</span>
+      <span><span class="who">Both</span> they work together</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="w-h">
+    <span class="label">Why this could work</span>
+    <h2 id="w-h">Grounded in DPPA's work, and already proven elsewhere</h2>
+    <div class="feeders">
+      <div class="feeder">
+        <h3>From our research and the UN</h3>
+        <ul>
+          <li>DPPA's tools avoid "embedding analysis." The user adds the judgment, so this surfaces gaps and never concludes.</li>
+          <li>GeoGuard's conflict data had no category for farmer-herder clashes, so they were invisible on the map.</li>
+          <li>DPPA's own chain runs inputs → language → analysis → outputs. Doubt tends to drop off as a claim moves up.</li>
+          <li>Conflict event data comes mostly from news, which under-reports rural and local-language areas.</li>
+        </ul>
+      </div>
+      <div class="feeder">
+        <h3>Already done in other fields</h3>
+        <ul>
+          <li><strong>Zero reporting</strong> in disease surveillance: clinics report "no cases," so silence is never mistaken for health.</li>
+          <li><strong>Ships "going dark"</strong>: switched-off trackers hid about 6% of global fishing (<a href="https://www.civilbeat.org/2022/12/when-fishing-boats-go-dark-at-sea-theyre-often-committing-crimes-heres-where-its-happening/" target="_blank" rel="noopener">source</a>).</li>
+          <li><strong>Internet shutdown monitors</strong> (IODA, #KeepItOn) treat a region going silent as a warning sign.</li>
+          <li><strong>El Fasher, 2025</strong>: under a blackout, satellite imagery documented what reporting couldn't.</li>        </ul>
+      </div>
+      <div class="feeder">
+        <h3>Words we use</h3>
+        <div class="chips" id="chips"></div>
+        <div class="term" id="term" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-h">
+    <span class="label">Open questions</span>
+    <h2 id="t-h">For us to work through</h2>
+    <ol class="qs">
+      <li>What counts as "normal" coverage for a place, and who gets to decide?</li>
+      <li>Which independent signals (satellite, outages, displacement, local monitors) could DPPA realistically use?</li>
+      <li>How do we explain the difference from concepts that flag what AI loses when summarizing voices it collected? We track what was never collected.</li>
+      <li>Who should be allowed to see a map of where the UN can't see, so it never becomes a surveillance or target map?</li>
+      <li>Does this fit into GeoGuard or the briefing workflow, or is it a new tool?</li>
+      <li>Which part do we prototype first for the Nov. 5 play test?</li>
+    </ol>
+  </section>
+
+  <footer>
+    <span>Team E · AI + Information Futures Studio · The New School · Fall 2026</span>
+    <span>A student concept for discussion. Not a UN tool, product or position.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // --- Map ---
+  var states = [
+    'reported','reported','quiet','reported','unheard','reported',
+    'reported','quiet','reported','reported','reported','quiet',
+    'unheard','reported','reported','contradicted','reported','reported',
+    'reported','reported','quiet','reported','unheard','reported'
+  ];
+  var captions = {
+    reported: ['Reported', 'Coverage is close to normal and reports are arriving. Nothing to flag about the data itself.'],
+    quiet: ['Quiet', 'Coverage is normal and sources are still reporting, but nothing is happening. Low activity here is real information.'],
+    unheard: ['Unheard', 'Coverage has dropped or never existed. Few reports here tells you little, because almost no one is reporting from this place.'],
+    contradicted: ['Silent, but changing', 'The scenario district: 2 reports instead of about 15, none in local languages, and satellite shows newly burned farmland. The silence itself is the warning.']
+  };
+  var map = document.getElementById('map');
+  var caption = document.getElementById('caption');
+  function showCell(i, btn) {
+    var c = captions[states[i]];
+    caption.innerHTML = '<strong>' + c[0] + '</strong><br>' + c[1];
+    map.querySelectorAll('.cell').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+    btn.setAttribute('aria-pressed', 'true');
+  }
+  states.forEach(function (s, i) {
+    var b = document.createElement('button');
+    b.className = 'cell ' + s;
+    b.setAttribute('aria-label', 'District ' + (i + 1) + ': ' + captions[s][0]);
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function () { showCell(i, b); });
+    b.addEventListener('mouseenter', function () { showCell(i, b); });
+    map.appendChild(b);
+  });
+  var start = states.indexOf('contradicted');
+  showCell(start, map.children[start]);
+
+  // --- Words we use ---
+  var terms = [
+    ['Quiet', 'Normal coverage, nothing reported. The absence of events is real.'],
+    ['Unheard', 'Coverage has dropped or never existed, so the absence of events means nothing.'],
+    ['Silent, but changing', 'Reporting has gone quiet while independent signals show change. This is the alert.'],
+    ['Normal coverage', 'How much reporting a place usually gets, from which sources and in which languages. Every gap is measured against it.'],
+    ['Gap record', 'A short note that travels with an analysis: what it rests on, where it is silent, what disagrees. People can add to it, but not quietly delete it.'],
+    ['Independent signal', 'Evidence from outside the usual reporting chain: satellite change, internet outages, people moving, market prices, ground sensors.']
+  ];
+  var chips = document.getElementById('chips');
+  var term = document.getElementById('term');
+  function showTerm(i) {
+    term.innerHTML = '<strong>' + terms[i][0] + '.</strong> ' + terms[i][1];
+    chips.querySelectorAll('.chip').forEach(function (c, j) { c.setAttribute('aria-pressed', j === i ? 'true' : 'false'); });
+  }
+  terms.forEach(function (t, i) {
+    var b = document.createElement('button');
+    b.className = 'chip'; b.textContent = t[0];
+    b.addEventListener('click', function () { showTerm(i); });
+    b.addEventListener('mouseenter', function () { showTerm(i); });
+    chips.appendChild(b);
+  });
+  showTerm(0);
+
+  // --- Flow ---
+  var phases = [
+    { t: 'Find the gap', s: 'Compare the reporting a place normally gets with what is arriving now.', who: 'Tool',
+      d: 'The tool learns what normal coverage looks like for each place, watches what is actually arriving, and measures the difference by place, time, language and type of event.',
+      ex: 'Normally about 15 reports a month from radio, NGOs and field staff, in French, English and Pidgin. This month: 2 English reports from the capital. Coverage is down about 85%.',
+      steps: [
+        { t: 'Expect', who: 'Both', d: 'Learn what normal coverage looks like for each place: how many reports, from which kinds of sources, in which languages, how often. Analysts help set this up.', ex: 'About 15 reports a month, 4 kinds of sources, 3 languages.' },
+        { t: 'Observe', who: 'Tool', d: 'Track what is actually arriving now: from which sources, in which languages, and how recently.', ex: '2 reports this month, both in English, both from outlets in the capital.' },
+        { t: 'Compare', who: 'Tool', d: 'Normal minus now is the gap. It also shows kinds of events the data can’t capture at all.', ex: 'Coverage down about 85%. No local-language sources. No farmer-herder events recorded.' }
+      ] },
+    { t: 'Check the silence', s: 'Test the silence against independent signals, then show it beside the analysis.', who: 'Tool',
+      d: 'A gap alone proves nothing. The tool checks it against signals from outside the reporting chain, sorts it as quiet, unheard, or silent but changing, and shows it next to the map or briefing.',
+      ex: 'Satellite shows newly burned farmland, so the district is marked "silent, but changing."',
+      steps: [
+        { t: 'Test', who: 'Tool', d: 'Test the silence against independent signals: satellite change, internet outages, people moving, market prices, ground sensors.', ex: 'Satellite shows newly burned farmland since last month.' },
+        { t: 'Show', who: 'Both', d: 'Put the gap beside the analysis: what it rests on, where it’s silent, what disagrees, and who could fill the gap. No trust score, no verdict.', ex: '"Rests on 2 reports, none local. Satellite shows change. Closest contact: Peace & Development Adviser."' }
+      ] },
+    { t: 'Carry it up', s: 'A person decides, and the gap stays attached all the way to the envoy.', who: 'Person',
+      d: 'The analyst decides what to do and notes why. The gap record then travels with the analysis, so the people deciding at the top know how solid the ground is. Afterwards, the team checks whether the silence hid something.',
+      ex: 'Briefing line for the envoy: "Assessment rests on 2 sources, none from the district. Local check requested."',
+      steps: [
+        { t: 'Decide', who: 'Person', d: 'The analyst decides: ask someone closer, act anyway, or record "unknown," and notes why. This step is always a person.', ex: 'The desk officer asks the Peace & Development Adviser to check with local civil-society contacts.' },
+        { t: 'Carry', who: 'Person', d: 'The gap record travels with the analysis up to the envoy. Each person can add to it; nobody can quietly delete it.', ex: '"Rests on 2 sources, none from the district. Local check requested."' },
+        { t: 'Learn', who: 'Both', d: 'Afterwards, check whether the silence hid something, and update what normal coverage looks like. Over time this shows where the UN keeps going blind.', ex: 'Three weeks later, displacement reports confirm clashes. The district’s normal coverage is updated.' }
+      ] }
+  ];
+
+  var flow = document.getElementById('flow');
+  var detail = document.getElementById('detail');
+  var v3 = document.getElementById('v3');
+  var v8 = document.getElementById('v8');
+  var pinned = null;
+
+  function whoTag(w) { return '<span class="who' + (w === 'Person' ? ' person' : '') + '">' + w + '</span>'; }
+  function render(it) {
+    detail.innerHTML =
+      '<div class="head"><span class="label">' + it.where + '</span>' + whoTag(it.who) + '</div>' +
+      '<h3>' + it.t + '</h3><p>' + it.d + '</p>' +
+      '<div class="ex"><span class="label">In the scenario</span>' + it.ex + '</div>';
+  }
+  function activate(btn) {
+    flow.querySelectorAll('.active').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+  function wire(btn, it) {
+    function show() { render(it); activate(btn); }
+    btn.addEventListener('mouseenter', show);
+    btn.addEventListener('focus', show);
+    btn.addEventListener('click', function () { pinned = { it: it, btn: btn }; show(); });
+    btn.addEventListener('mouseleave', function () { if (pinned) { render(pinned.it); activate(pinned.btn); } });
+    return btn;
+  }
+
+  function buildSimple() {
+    var wrap = document.createElement('div');
+    wrap.className = 'phases';
+    phases.forEach(function (p, i) {
+      var b = document.createElement('button');
+      b.className = 'phase-card';
+      b.innerHTML = '<span class="num">' + (i + 1) + '</span><span class="t">' + p.t + '</span><span class="s">' + p.s + '</span>' + whoTag(p.who);
+      var it = { t: p.t, d: p.d, ex: p.ex, who: p.who, where: 'Phase ' + (i + 1) + ' of 3' };
+      wrap.appendChild(wire(b, it));
+      if (i === 0) pinned = { it: it, btn: b };
+    });
+    return wrap;
+  }
+  function buildFull() {
+    var track = document.createElement('div');
+    track.className = 'track';
+    var n = 0;
+    phases.forEach(function (p, pi) {
+      var band = document.createElement('div');
+      band.className = 'band';
+      band.style.setProperty('--from', n + 1);
+      band.style.setProperty('--span', p.steps.length);
+      band.innerHTML = '<b>' + (pi + 1) + '</b> · ' + p.t;
+      track.appendChild(band);
+      p.steps.forEach(function (s) {
+        n += 1;
+        var b = document.createElement('button');
+        b.className = 'tile';
+        b.style.setProperty('--col', n);
+        b.innerHTML = '<span class="num">' + n + '</span><span class="t">' + s.t + '</span>' + whoTag(s.who);
+        var it = { t: s.t, d: s.d, ex: s.ex, who: s.who, where: 'Step ' + n + ' of 8 · ' + p.t };
+        track.appendChild(wire(b, it));
+        if (n === 1) pinned = { it: it, btn: b };
+      });
+    });
+    return track;
+  }
+  function show(full) {
+    v3.setAttribute('aria-pressed', String(!full));
+    v8.setAttribute('aria-pressed', String(full));
+    flow.innerHTML = '';
+    flow.appendChild(full ? buildFull() : buildSimple());
+    render(pinned.it); activate(pinned.btn);
+  }
+  v3.addEventListener('click', function () { show(false); });
+  v8.addEventListener('click', function () { show(true); });
+  show(false);
+})();
+</script>
