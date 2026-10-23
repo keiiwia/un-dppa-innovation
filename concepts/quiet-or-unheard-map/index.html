@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiet or Unheard?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <h1>Quiet or Unheard?</h1>
+    <span class="draft">Concept draft</span>
+  </div>
+  <nav class="menu" aria-label="Concept">
+    <button data-panel="p-concept" aria-expanded="false">Concept</button>
+    <button data-panel="p-flow" aria-expanded="false">How it works</button>
+    <button data-panel="p-why" aria-expanded="false">Why it could work</button>
+    <button data-panel="p-words" aria-expanded="false">Terms</button>
+    <button data-panel="p-qs" aria-expanded="false">Open questions</button>
+  </nav>
+</header>
+
+<main class="stage">
+  <div class="map" id="map" role="group" aria-label="Example district map, Northwest Cameroon"></div>
+
+  <div class="card">
+    <div class="caption" id="caption" aria-live="polite"></div>
+    <div class="legend">
+      <span><i class="swatch swatch--reported"></i>Reported</span>
+      <span><i class="swatch swatch--quiet"></i>Quiet</span>
+      <span><i class="swatch swatch--unheard"></i>Unheard</span>
+      <span><i class="swatch swatch--changing"></i>Silent, but changing</span>
+    </div>
+    <p class="hint">Northwest Cameroon, 34 subdivisions. Real borders, made-up coverage data.</p>
+  </div>
+
+  <aside class="panel" id="p-concept" hidden aria-labelledby="h-concept">
+    <div class="panel-head"><h2 id="h-concept">Concept</h2><button class="close" aria-label="Close">×</button></div>
+    <p class="question">How might UN analysts tell a <em>quiet</em> place from an <em>unheard</em> one?</p>
+    <h3>Silence as a data point</h3>
+    <p>Compare the reporting a place normally gets with what's arriving now. Check any silence against independent signals. Keep the gap attached to the analysis, all the way up to the envoy.</p>
+    <div class="rules">
+      <span class="rule">No trust scores</span>
+      <span class="rule">No verdicts</span>
+      <span class="rule">A person makes the call</span>
+    </div>
+    <h3>Scenario</h3>
+    <p>A Northwest district usually gets about 15 reports a month, including local-language radio. This month: 2, both in English, both from capital outlets. Satellite shows newly burned farmland. Quiet, or unheard?</p>
+    <p class="hint">Team E · Territories 5, 7, 10 · AI + Information Futures Studio, The New School, Fall 2026. A student concept, not a UN tool, product or position.</p>
+  </aside>
+
+  <aside class="panel" id="p-flow" hidden aria-labelledby="h-flow">
+    <div class="panel-head"><h2 id="h-flow">How it works</h2><button class="close" aria-label="Close">×</button></div>
+    <div class="switch" role="group" aria-label="Level of detail">
+      <button id="v3" aria-pressed="true">3 phases</button>
+      <button id="v8" aria-pressed="false">8 steps</button>
+    </div>
+    <div id="flow"></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+    <div class="whokey hint">
+      <span><span class="who">Tool</span> software</span>
+      <span><span class="who person">Person</span> analyst decides</span>
+      <span><span class="who">Both</span> together</span>
+    </div>
+  </aside>
+
+  <aside class="panel" id="p-why" hidden aria-labelledby="h-why">
+    <div class="panel-head"><h2 id="h-why">Why it could work</h2><button class="close" aria-label="Close">×</button></div>
+    <h3>From DPPA and our research</h3>
+    <ul>
+      <li>DPPA's tools avoid "embedding analysis." This surfaces gaps and never concludes.</li>
+      <li>GeoGuard's conflict data had no category for farmer-herder clashes, so they never appeared on the map.</li>
+      <li>Doubt drops off as a claim moves from inputs to analysis to the envoy.</li>
+      <li>Conflict data comes mostly from news, which under-reports rural and local-language areas.</li>
+    </ul>
+    <h3>Already done elsewhere</h3>
+    <ul>
+      <li><strong>Zero reporting:</strong> clinics report "no cases," so silence isn't mistaken for health.</li>
+      <li><strong>Ships going dark:</strong> switched-off trackers hid about 6% of global fishing (<a href="https://www.civilbeat.org/2022/12/when-fishing-boats-go-dark-at-sea-theyre-often-committing-crimes-heres-where-its-happening/" target="_blank" rel="noopener">source</a>).</li>
+      <li><strong>Shutdown monitors:</strong> IODA and #KeepItOn treat a region going silent as a warning.</li>
+      <li><strong>El Fasher, 2025:</strong> under a blackout, satellite imagery showed what reporting couldn't.</li>
+    </ul>
+  </aside>
+
+  <aside class="panel" id="p-words" hidden aria-labelledby="h-words">
+    <div class="panel-head"><h2 id="h-words">Terms</h2><button class="close" aria-label="Close">×</button></div>
+    <div class="chips" id="chips"></div>
+    <div class="term" id="term" aria-live="polite"></div>
+  </aside>
+
+  <aside class="panel" id="p-qs" hidden aria-labelledby="h-qs">
+    <div class="panel-head"><h2 id="h-qs">Open questions</h2><button class="close" aria-label="Close">×</button></div>
+    <ol class="qs">
+      <li>What counts as "normal" coverage, and who decides?</li>
+      <li>Which independent signals could DPPA realistically use?</li>
+      <li>How is this different from concepts about what AI loses when summarizing? We track what was never collected.</li>
+      <li>Who may see a map of where the UN can't see, so it never becomes a target map?</li>
+      <li>Part of GeoGuard or the briefing workflow, or a new tool?</li>
+      <li>What do we prototype first for the Nov. 5 play test?</li>
+    </ol>
+  </aside>
+</main>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="data/northwest.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
