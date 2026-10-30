@@ -1,6 +1,6 @@
 # After the review
 
-Ethan reviewed the whole Source Map on 30 Oct 2026. His decision on every stage, item and case study is in [`review-sheet.md`](review-sheet.md). He kept everything and asked questions. This plan covers the research and edits those questions call for, done in one pass.
+Ethan reviewed the whole Source Map on 30 Oct 2026. His decision on every stage, item and case study is in [`review-sheet.md`](review-sheet.md). He kept everything and asked questions. This plan covers the research and edits those questions call for. **None of it has been started.** Anyone on the team can take a section.
 
 ## 1. How the agent connects to each source
 
@@ -106,4 +106,4 @@ Put it into stage 2's text in `data.js` and the README table, marked as a draft 
 - `connection-strategy.md` answers Ethan's question with a recommendation.
 - Every question in step 3 has an answer, or "couldn't confirm", in the review sheet.
 - The map loads without console errors, and the sheet rebuilds without losing decisions.
-- The changes are pushed to this pull request's branch.
+- The changes are in the repo, through a pull request.

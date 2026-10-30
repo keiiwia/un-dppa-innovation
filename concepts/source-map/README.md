@@ -6,7 +6,7 @@
 
 Open [`index.html`](index.html) in a browser. It's a collapsible tree in the style of [OSINT Framework](https://osintframework.com/), built around our question: how might UN analysts tell a quiet place from an unheard one?
 
-**Reviewed by Ethan on 30 Oct.** His decision on every stage, item and case study is in [`review-sheet.md`](review-sheet.md). The research and edits that follow from it are in [`review-plan.md`](review-plan.md).
+**Reviewed by Ethan on 30 Oct.** His decision on every stage, item and case study is in [`review-sheet.md`](review-sheet.md). The research and edits that follow from it are listed, not yet started, in [`review-plan.md`](review-plan.md).
 
 ## The output
 

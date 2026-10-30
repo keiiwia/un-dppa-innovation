@@ -7,7 +7,7 @@ Every item in the Source Map, in the same order as the tree. Generated from `dat
 <!-- review -->
 ## Review
 
-**Reviewed by Ethan on 30 Oct 2026.** Every stage, item and case study below has his decision. Nothing was cut; a few items are marked *keep for now* or *possible cut* for the team to decide. Research on his questions is next (see [`review-plan.md`](review-plan.md)). Answers will go under each decision, marked *research, to verify*.
+**Reviewed by Ethan on 30 Oct 2026.** Every stage, item and case study below has his decision. Nothing was cut; a few items are marked *keep for now* or *possible cut* for the team to decide. His questions haven't been researched yet. [`review-plan.md`](review-plan.md) lists that research for whoever picks it up; answers go under each decision, marked *research, to verify*.
 
 **Questions for every source and tool:**
 - Is there an official API or MCP connection, or would we need to build one?
