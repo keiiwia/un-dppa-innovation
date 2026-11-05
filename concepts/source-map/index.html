@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Source Map</title>
+<meta name="description" content="Draft: where a UN analyst can look, and what each source can tell them about silence. Organised by the analyst's path from setting the scene to carrying the gap up.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <h1>Source Map</h1>
+    <span class="draft">Draft</span>
+  </div>
+  <div class="tools">
+    <input type="search" id="search" placeholder="Search sources and tools" aria-label="Search sources and tools" autocomplete="off">
+    <button class="btn" id="filters-btn" aria-expanded="false" aria-controls="filters">Filters</button>
+    <button class="btn" id="expand-btn">Expand all</button>
+    <button class="btn" id="notes-btn">Notes</button>
+  </div>
+  <div class="filters" id="filters" hidden></div>
+</header>
+
+<main class="stage">
+  <svg id="tree" aria-label="Source map tree. Stages on the left open into branches of sources and tools."></svg>
+  <nav class="trail" id="trail" aria-label="Where you are" hidden></nav>
+  <p class="empty" id="empty" hidden>Nothing matches. Try a different search or fewer filters.</p>
+  <p class="hint" id="hint"></p>
+  <aside class="panel" id="panel" aria-live="polite" hidden></aside>
+</main>
+
+<dialog id="notes" aria-labelledby="notes-title">
+  <form method="dialog"><button class="btn close" aria-label="Close notes">✕</button></form>
+  <h2 id="notes-title">Notes</h2>
+  <p>Where a UN analyst can look, and what each place can tell them about silence. Read left to right: set the scene, watch what's arriving, check the silence, verify what comes in, carry it up. Case studies sit at the end.</p>
+
+  <h3>Tags</h3>
+  <dl class="legend">
+    <dt>F</dt><dd>Freemium: some of it is free</dd>
+    <dt>P</dt><dd>Paid</dd>
+    <dt>R</dt><dd>Needs registration</dd>
+    <dt>UN</dt><dd>UN or partner access only</dd>
+    <dt>none</dt><dd>Free and open</dd>
+    <dt>required</dt><dd>Set by the analyst before anything else: country, region, issue</dd>
+  </dl>
+
+  <h3>Circles</h3>
+  <ul class="circles">
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle class="k-closed" cx="8" cy="8" r="5"/></svg>Has more inside. Click to open.</li>
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle class="k-item" cx="8" cy="8" r="4.5"/></svg>A source or tool. Click for details.</li>
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle class="k-practice" cx="8" cy="8" r="4.5"/></svg>A practice: something people do, not a tool.</li>
+    <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle class="k-case" cx="8" cy="8" r="4.5"/></svg>A case study, coloured by the stage it illustrates.</li>
+  </ul>
+
+  <h3>Where items came from</h3>
+  <ul class="from-counts" id="from-counts"></ul>
+  <p class="hint" id="check-note"></p>
+
+  <h3>Left out on purpose</h3>
+  <p>People search, usernames, emails and phone numbers. Our question is about places, not individuals.</p>
+
+  <p class="hint foot">Modelled on <a href="https://osintframework.com/" target="_blank" rel="noopener">OSINT Framework</a>. A student concept for the AI + Information Futures Studio (The New School, Fall 2026). Not a UN tool, product or position.</p>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
