@@ -3,10 +3,10 @@
   var S = window.MockScraper, SC = window.SCENARIO, CATALOG = window.CATALOG, LINKS = window.CATALOG_LINKS;
   var STORE = 'playtest-venezuela-v1';
   var COLS = [
-    { key: 'who', label: 'Who', hint: 'People, governments, groups' },
-    { key: 'what', label: 'What', hint: 'What type of crisis or problem is this?' },
-    { key: 'when', label: 'When', hint: 'Time of occurrence' },
-    { key: 'where', label: 'Where', hint: 'Countries, cities, sites' }
+    { key: 'who', label: 'Who', placeholder: 'People, governments, groups' },
+    { key: 'what', label: 'What', placeholder: 'What type of crisis or problem is this?' },
+    { key: 'when', label: 'When', placeholder: 'Time of occurrence' },
+    { key: 'where', label: 'Where', placeholder: 'Countries, cities, sites' }
   ];
   var STEPS = ['Scope', 'Select', 'Search', 'Workspace', 'Correlations'];
   var DEFAULT_CATS = ['Uncategorized', 'Key evidence', 'Needs checking', 'Background', 'Set aside'];
@@ -59,7 +59,6 @@
   function entry(id) { return allEntries().filter(function (e) { return e.id === id; })[0]; }
   function shortName(e) { return e.publisher.replace(/\s*\(.*$/, '').slice(0, 24); }
   function win() { return S.parseWindow(state.query.when, SC); }
-  function gathered(id) { return state.run && state.run.gathered.filter(function (g) { return g.id === id; })[0]; }
 
   //top level rendering
   function render(moved) {
@@ -99,11 +98,10 @@
       var tokens = state.query[c.key];
       var unused = SC.suggestions[c.key].filter(function (s) { return tokens.indexOf(s) < 0; });
       return '<section class="col"><label for="in-' + c.key + '" class="col-label">' + c.label + '</label>' +
-        '<span class="muted small">' + c.hint + '</span>' +
         '<ul class="tokens">' + tokens.map(function (t, i) {
           return '<li><button type="button" class="token" data-action="untoken" data-col="' + c.key + '" data-i="' + i + '" aria-label="Remove ' + esc(t) + '">' + esc(t) + ' <span aria-hidden="true">×</span></button></li>';
         }).join('') + '</ul>' +
-        '<input id="in-' + c.key + '" data-col="' + c.key + '" type="text" autocomplete="off" placeholder="Type, then press Enter">' +
+        '<textarea id="in-' + c.key + '" data-col="' + c.key + '" class="col-input" rows="2" autocomplete="off" placeholder="' + esc(c.placeholder) + '"></textarea>' +
         (unused.length ? '<div class="suggest">' + unused.map(function (s) {
           return '<button type="button" class="suggestion" data-action="token" data-col="' + c.key + '" data-value="' + esc(s) + '">+ ' + esc(s) + '</button>';
         }).join('') + '</div>' : '') + '</section>';
@@ -116,7 +114,7 @@
         '<button type="button" data-action="use-scenario">Use that scenario</button></div>' : '') +
       '<div class="row"><button type="submit" class="primary">Find sources</button></div></form>';
     $('scope-form').addEventListener('submit', submitScope);
-    Array.prototype.forEach.call($('screen').querySelectorAll('input[data-col]'), function (inp) {
+    Array.prototype.forEach.call($('screen').querySelectorAll('textarea[data-col]'), function (inp) {
       inp.addEventListener('keydown', function (e) {
         if (e.key !== 'Enter') return;
         e.preventDefault();
@@ -137,7 +135,7 @@
   function submitScope(e) {
     e.preventDefault();
     // Text typed but not yet entered still counts
-    Array.prototype.forEach.call($('screen').querySelectorAll('input[data-col]'), function (inp) {
+    Array.prototype.forEach.call($('screen').querySelectorAll('textarea[data-col]'), function (inp) {
       addToken(inp.getAttribute('data-col'), inp.value);
     });
     var missing = COLS.filter(function (c) { return !state.query[c.key].length; }).map(function (c) { return c.label; });
@@ -439,8 +437,6 @@
     if (state.screen === 2) {
       body += '<label class="panel-pick"><input type="checkbox" data-action="pick" data-id="' + esc(e.id) + '"' + (state.picks.indexOf(e.id) >= 0 ? ' checked' : '') + '> Work from this source</label>';
     }
-    var g = gathered(e.id);
-    if (state.screen === 4 && g) body += '<p class="why small"><strong>Why it\'s here:</strong> ' + esc(g.why) + '</p>';
     body += '<h3>About this source</h3><ul class="signals">' + signals.map(function (s) {
       return '<li><span class="' + (s.warn ? 'flag' : 'tag') + '">' + esc(s.label) + '</span> <span class="muted small">' + esc(s.detail) + '</span></li>';
     }).join('') + '</ul>';
