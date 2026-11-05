@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Source Gatherer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Source Gatherer</h1>
+    <p class="muted">Filters and tags sources for your scope. It does not rate credibility or decide what is true. You read and decide.</p>
+  </header>
+
+  <form id="scope" class="scope">
+    <label>Country <select id="country" required></select></label>
+    <label>Region <select id="region" required></select></label>
+    <label>Issue / crisis <select id="issue" required></select></label>
+    <button type="submit" class="primary">Search</button>
+  </form>
+
+  <p id="stop" class="stop" hidden></p>
+
+  <div id="out" hidden>
+    <details id="derived" class="derived">
+      <summary id="derived-summary"></summary>
+      <div class="derived-body">
+        <fieldset>
+          <legend>Languages</legend>
+          <div id="languages" class="checks"></div>
+          <label class="inline">Add language code <input id="add-lang" type="text" size="8" placeholder="e.g. ff"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Bordering states</legend>
+          <div id="borders" class="checks"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Time window</legend>
+          <label class="inline"><input id="window" type="number" min="1" size="5"> days</label>
+        </fieldset>
+        <div class="row">
+          <button type="button" id="rerun" class="primary">Re-run</button>
+          <button type="button" id="reset">Reset to derived</button>
+        </div>
+      </div>
+    </details>
+
+    <section id="gaps" class="gaps"></section>
+
+    <nav id="classbar" class="classbar" aria-label="Source classes"></nav>
+
+    <div class="layout">
+      <aside id="facets" class="facets"></aside>
+      <main>
+        <div class="toolbar">
+          <input id="q" type="search" placeholder="Filter by name, tag or note" aria-label="Filter results">
+          <span id="shown" class="muted"></span>
+        </div>
+        <div id="chips" class="chips"></div>
+        <section id="classes"></section>
+        <details id="possibly" class="more"></details>
+        <details id="toolkit" class="more"></details>
+        <details id="trace" class="more"></details>
+      </main>
+    </div>
+  </div>
+
+  <script src="data/geo.js"></script>
+  <script src="data/phonebook.js"></script>
+  <script src="algorithm.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

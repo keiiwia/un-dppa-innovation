@@ -1,0 +1,14 @@
+{
+  "name": "playtest-venezuela",
+  "private": true,
+  "scripts": {
+    "build:annotate": "esbuild dev/annotate.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\\\"production\\\" --outfile=dev/annotate.bundle.js",
+    "test": "node test.js"
+  },
+  "devDependencies": {
+    "agentation": "^3.1.2",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  }
+}
