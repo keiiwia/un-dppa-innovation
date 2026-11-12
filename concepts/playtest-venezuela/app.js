@@ -17,22 +17,23 @@
   function fresh() {
     return {
       screen: 1, reached: 1, query: { who: [], what: [], when: [], where: [] }, picks: [], notes: {}, added: [],
-      run: null, cats: DEFAULT_CATS.slice(), cat: {}, onMap: [], edges: [], pos: {}, dismissed: []
+      run: null, cats: DEFAULT_CATS.slice(), cat: {}, onMap: [], edges: [], pos: {}, dismissed: [],
+      corr: { mode: 'map', x: 'date', y: 'cls', color: 'cls', group: 'cls', show: 'all', links: true }
     };
   }
   var state = load();
   // view-only state
   var view = { panel: null, opener: null, error: null, outOfScope: false, seedClass: 'all', seedText: '', showOutside: false, group: 'all', catFilter: 'all', picking: false, target: '' };
-  var graph = null, timers = [];
+  var graph = null, corr = null, timers = [];
 
   function load() {
     try {
       var saved = JSON.parse(localStorage.getItem(STORE));
       if (saved && saved.query) {
         if (saved.screen === 3) saved.screen = 2;
-        // Correlations is switched off for the playtest, so saved sessions can't land on it
-        if (saved.screen === 5) saved.screen = 4;
-        return Object.assign(fresh(), saved);
+        var base = fresh();
+        saved.corr = Object.assign(base.corr, saved.corr, { mode: 'map' });
+        return Object.assign(base, saved);
       }
     } catch (e) { /* private window or blocked storage: start fresh */ }
     return fresh();
@@ -66,12 +67,15 @@
     if (location.hash !== hash) location.replace(hash);
     renderSteps();
     graph = null;
+    if (corr) { corr.destroy(); corr = null; }
     ({ 1: renderScope, 2: renderSelect, 3: renderLoader, 4: renderWorkspace, 5: renderCorrelations })[state.screen]();
     renderPanel();
     if (moved) { $('screen').focus({ preventScroll: true }); window.scrollTo(0, 0); }
     save();
   }
   function go(n) {
+    // the correlation map always opens on the world map
+    if (n === 5 && state.screen !== 5) state.corr.mode = 'map';
     state.screen = n;
     state.reached = Math.max(state.reached, n);
     view.panel = null; view.picking = false; view.target = '';
@@ -86,7 +90,7 @@
   }
   function renderSteps() {
     $('steps').innerHTML = STEPS.map(function (label, i) {
-      var n = i + 1, can = n <= state.reached && n !== 3 && n !== 5 && state.screen !== 3;
+      var n = i + 1, can = n <= state.reached && n !== 3 && state.screen !== 3;
       return '<button type="button" class="step' + (n === state.screen ? ' on' : '') + '"' + (n === state.screen ? ' aria-current="step"' : '') +
         (can ? ' data-action="go" data-n="' + n + '"' : ' disabled') + '><span>' + n + '</span> ' + label + '</button>';
     }).join('');
@@ -94,6 +98,11 @@
 
   // --- 1 · Who / what / when / where ---
   function renderScope() {
+    // keep "Still needed" current as fields get filled, once it has been shown
+    if (view.error && view.error.indexOf('Still needed') === 0) {
+      var stillMissing = missingCols();
+      view.error = stillMissing.length ? 'Still needed: ' + stillMissing.join(', ') + '.' : null;
+    }
     var parts = COLS.map(function (c) {
       var tokens = state.query[c.key];
       var unused = SC.suggestions[c.key].filter(function (s) { return tokens.indexOf(s) < 0; });
@@ -107,7 +116,8 @@
         }).join('') + '</div>' : '') + '</section>';
     }).join('');
     $('screen').innerHTML =
-      '<form id="scope-form" class="scope-page" novalidate><h1 class="sr">Scope</h1>' +
+      '<form id="scope-form" class="scope-page" novalidate><h1>Set your scope</h1>' +
+      '<p class="muted">Add who, what, when and where. Type your own and press Enter, or pick a suggestion.</p>' +
       '<div class="wwww">' + parts + '</div>' +
       (view.error ? '<p class="error" role="alert">' + esc(view.error) + '</p>' : '') +
       (view.outOfScope ? '<div class="notice" role="alert"><p>This playtest only holds one scenario: the ' + esc(SC.label) + ', Jan 3–16, 2026.</p>' +
@@ -132,13 +142,16 @@
     state.query[col].push(v);
     return true;
   }
+  function missingCols() {
+    return COLS.filter(function (c) { return !state.query[c.key].length; }).map(function (c) { return c.label; });
+  }
   function submitScope(e) {
     e.preventDefault();
     // Text typed but not yet entered still counts
     Array.prototype.forEach.call($('screen').querySelectorAll('textarea[data-col]'), function (inp) {
       addToken(inp.getAttribute('data-col'), inp.value);
     });
-    var missing = COLS.filter(function (c) { return !state.query[c.key].length; }).map(function (c) { return c.label; });
+    var missing = missingCols();
     view.error = missing.length ? 'Still needed: ' + missing.join(', ') + '.' : null;
     view.outOfScope = !missing.length && !S.inScope(state.query, SC);
     if (missing.length || view.outOfScope) return render();
@@ -304,7 +317,7 @@
       '<section class="ws-map" aria-label="Connections map">' +
         '<svg id="map" role="group" aria-label="Map of sources and connections"></svg>' +
         '<div id="map-hint" class="map-hint"></div>' +
-        '<button type="button" class="primary map-next" disabled title="Coming later">Correlation map</button>' +
+        '<button type="button" class="primary map-next" data-action="go" data-n="5">Correlation map</button>' +
         '<div id="map-key" class="map-key"></div></section></div></div>';
     graph = window.NodeMap.create($('map'), {
       onSelect: nodeClicked,
@@ -367,20 +380,132 @@
     openPanel(id, null);
   }
 
-  // correlation map..
+  // --- 5 · Correlation map ---
+  // One dot per source. The analyst picks the arrangement; every option is a recorded fact or their own label.
+  var VIEWS = [['map', 'Map'], ['axes', 'Scatter'], ['groups', 'Groups']];
+  var ORIGIN_ORDER = ['official statement', 'wire', 'original reporting', 'analysis', 'fact-check', 'monitor', 'social post (via report)', 'user-generated'];
+  var READ_LABELS = { direct: 'Text read', search: 'Search text only', none: 'Not read', analyst: 'Added by you' };
+  var WHO_LABELS = { named: 'Named sources', pseudonymous: 'Pseudonymous sources', 'not stated': 'Sources not stated' };
+  var GROUP_LABELS = { pick: 'Your picks', related: 'Related', widened: 'Semi-related' };
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function corrFields() {
+    return {
+      date: { label: 'Date published', dateOnly: true },
+      cls: { label: 'Source class', order: S.CLASSES.map(function (c) { return S.CLASS_LABELS[c]; }), get: function (e) { return S.CLASS_LABELS[e.cls]; } },
+      origin: { label: 'How it knows', order: ORIGIN_ORDER.map(cap), get: function (e) { return e.origin && cap(e.origin); } },
+      read: { label: 'How it was read', order: ['Text read', 'Search text only', 'Not read', 'Added by you'], get: function (e) { return READ_LABELS[e.read]; } },
+      who: { label: 'Who it names', order: ['Named sources', 'Pseudonymous sources', 'Sources not stated'], get: function (e) { return WHO_LABELS[e.who]; } },
+      lang: { label: 'Language', order: ['English', 'Spanish', 'Unknown'], get: function (e) { return e.lang; } },
+      group: { label: 'How it got here', order: ['Your picks', 'Related', 'Semi-related'] },
+      cat: { label: 'Your category', order: state.cats, get: function (e) { return catOf(e.id); } }
+    };
+  }
   function renderCorrelations() {
-    var cats = {};
-    workspaceRows().forEach(function (r) { var c = catOf(r.id); cats[c] = (cats[c] || 0) + 1; });
-    $('screen').innerHTML = '<div class="page corr"><h1>Correlation map</h1>' +
-      '<p class="muted">Not built yet. This screen will plot your sources and connections as a data visualization.</p>' +
-      '<div class="axes" aria-hidden="true"><span class="ax top">Newer</span><span class="ax bottom">Older</span><span class="ax left">L</span><span class="ax right">R</span></div>' +
-      '<h2>What it will receive</h2><ul class="plain">' +
-      '<li>' + plural(workspaceRows().length, 'source') + ', ' + plural(state.onMap.length, 'source') + ' on your map</li>' +
-      '<li>' + plural(state.edges.length, 'connection') + '</li>' +
-      '<li>' + plural(Object.keys(state.notes).filter(function (k) { return state.notes[k]; }).length, 'note') + '</li>' +
-      '<li>' + Object.keys(cats).map(function (c) { return esc(c) + ' ' + cats[c]; }).join(' · ') + '</li></ul>' +
-      '<div class="row"><button type="button" data-action="go" data-n="4">Back to workspace</button>' +
-      '<button type="button" data-action="export">Download this session (JSON)</button></div></div>';
+    if (!state.run) return go(2);
+    $('screen').innerHTML = '<div class="corr-page"><h1 class="sr">Correlation map</h1>' +
+      '<div class="corr-bar"><div><h2>Correlation map</h2><p class="muted small">Click a dot to open its source.</p></div>' +
+      '<div class="corr-tools"><div class="pills" role="group" aria-label="View">' + VIEWS.map(function (v) {
+        return '<button type="button" class="pill" data-action="corr-view" data-value="' + v[0] + '" aria-pressed="' + (state.corr.mode === v[0]) + '">' + v[1] + '</button>';
+      }).join('') + '</div><div id="corr-controls" class="corr-controls"></div></div></div>' +
+      '<div id="corr-key" class="corr-key"></div>' +
+      '<div class="corr-stage"><div id="corr-host" class="corr-host"></div></div>' +
+      '<div class="corr-foot"><p id="corr-status" class="muted small" aria-live="polite"></p><div class="row">' +
+      '<button type="button" id="corr-play" data-action="corr-play">Replay in order published</button>' +
+      '<button type="button" data-action="go" data-n="4">Back to workspace</button>' +
+      '<button type="button" data-action="export">Download this session (JSON)</button></div></div></div>';
+    corr = window.CorrMap.create($('corr-host'), {
+      onSelect: function (id) { return view.panel === id ? closePanel() : openPanel(id, id); }
+    });
+    renderCorrControls();
+    drawCorr(false);
+  }
+  // a category edit in the panel updates whichever screen is showing
+  function refreshAfterEdit() {
+    if (state.screen === 4) { renderWsList(); renderKey(); drawMap(0); }
+    if (state.screen === 5) { renderCorrControls(); drawCorr(false); }
+  }
+  function renderCorrControls() {
+    var F = corrFields(), c = state.corr;
+    function select(id, label, value, keys) {
+      return '<label class="small">' + label + ' <select id="' + id + '">' + keys.map(function (k) {
+        return '<option value="' + k + '"' + (k === value ? ' selected' : '') + '>' + esc(F[k].label) + '</option>';
+      }).join('') + '</select></label>';
+    }
+    var facts = Object.keys(F).filter(function (k) { return !F[k].dateOnly; });
+    var onMap = state.onMap.filter(function (id) { return workspaceRows().some(function (r) { return r.id === id; }); }).length;
+    var html = '<label class="small">Show <select id="corr-show"><option value="all"' + (c.show !== 'map' ? ' selected' : '') + '>All gathered sources</option>' +
+      '<option value="map"' + (c.show === 'map' ? ' selected' : '') + '>Only on my workspace map (' + onMap + ')</option></select></label>';
+    if (c.mode === 'axes') html += select('corr-x', 'X', c.x, Object.keys(F)) + select('corr-y', 'Y', c.y, facts);
+    if (c.mode === 'groups') html += select('corr-group', 'Group by', c.group, facts);
+    html += select('corr-color', 'Color', c.color, facts);
+    html += '<label class="small check"><input type="checkbox" id="corr-links"' + (c.links ? ' checked' : '') + '> Your connections</label>';
+    $('corr-controls').innerHTML = html;
+    [['corr-show', 'show'], ['corr-x', 'x'], ['corr-y', 'y'], ['corr-group', 'group'], ['corr-color', 'color']].forEach(function (p) {
+      var el = $(p[0]);
+      if (el) el.addEventListener('change', function () { state.corr[p[1]] = this.value; save(); drawCorr(true); });
+    });
+    $('corr-links').addEventListener('change', function () { state.corr.links = this.checked; save(); drawCorr(false); });
+  }
+  function drawCorr(animate) {
+    if (!corr) return;
+    var F = corrFields(), c = state.corr, w = win(), seen = {};
+    var items = workspaceRows().filter(function (r) {
+      if (c.show === 'map' && state.onMap.indexOf(r.id) < 0) return false;
+      return !seen[r.id] && (seen[r.id] = true);
+    }).map(function (r) {
+      var e = entry(r.id), values = {};
+      Object.keys(F).forEach(function (k) {
+        if (F[k].dateOnly) return;
+        values[k] = (k === 'group' ? GROUP_LABELS[r.group] : F[k].get(e)) || 'Not recorded';
+      });
+      return { id: e.id, title: e.title, sub: shortName(e) + ' · ' + fmtDate(e.published), date: e.published, status: S.windowStatus(e, w),
+        values: values, claims: (e.claims || []).length, place: window.DEMO_PLACES.of(e.id) };
+    });
+    // categories in a fixed order; empty ones stay visible so gaps show
+    function order(k) {
+      var list = (F[k].order || []).slice();
+      items.forEach(function (d) { if (list.indexOf(d.values[k]) < 0) list.push(d.values[k]); });
+      return list;
+    }
+    var colorOrder = order(c.color);
+    function colorOf(v) {
+      if (c.color === 'cat') return catColor(v);
+      if (v === 'Unknown' || v === 'Not recorded') return 'var(--cat-0)';
+      return 'var(--cat-' + ((colorOrder.indexOf(v) % 8) + 1) + ')';
+    }
+    items.forEach(function (d) { d.color = colorOf(d.values[c.color]); });
+    var byId = {}; items.forEach(function (d) { byId[d.id] = d; });
+    var links = c.links ? state.edges.map(function (x) {
+      return { a: x.a, b: x.b, dashed: DASHED.indexOf(x.rel) >= 0, label: x.rel + (x.note ? ': ' + x.note : '') };
+    }) : [];
+    corr.update({
+      mode: c.mode, items: items, byId: byId, order: order, links: links, window: w,
+      x: { key: c.x, label: F[c.x].label }, y: { key: c.y, label: F[c.y].label }, group: { key: c.group, label: F[c.group].label },
+      scope: window.DEMO_PLACES.scope(state.query.where)
+    }, animate);
+    corr.highlight(view.panel);
+
+    var counts = {}; items.forEach(function (d) { counts[d.values[c.color]] = (counts[d.values[c.color]] || 0) + 1; });
+    $('corr-key').innerHTML = '<strong class="small">' + esc(F[c.color].label) + '</strong>' + colorOrder.filter(function (v) { return counts[v]; }).map(function (v) {
+      return '<span class="cat-tag"><i style="background:' + colorOf(v) + '"></i>' + esc(v) + ' · ' + counts[v] + '</span>';
+    }).join('') + (links.length ? '<span class="small muted key-line">Lines: your connections. Dashed: differs or contradicts</span>' : '');
+    var undated = items.filter(function (d) { return d.status === 'unknown'; }).length;
+    var outside = items.filter(function (d) { return d.status === 'out'; }).length;
+    var unplaced = items.filter(function (d) { return !d.place; }).length;
+    if (!items.length) { $('corr-status').textContent = 'No sources on your workspace map yet. Add some on screen 4, or show all gathered sources.'; return; }
+    $('corr-status').textContent = plural(items.length, 'source') + (c.mode === 'map'
+      ? ' · ' + unplaced + ' with no location recorded'
+      : ' · ' + undated + ' with no confirmed date · ' + outside + ' outside your dates');
+  }
+  function toggleReplay() {
+    var btn = $('corr-play');
+    var status = $('corr-status').textContent;
+    function done() { btn.textContent = 'Replay in order published'; $('corr-status').textContent = status; }
+    if (corr.playing()) { corr.stop(true); return done(); }
+    btn.textContent = 'Stop replay';
+    corr.play(function (d, i, n) {
+      $('corr-status').textContent = (d.status === 'in' ? fmtDate(d.date) : d.status === 'out' ? 'Outside your dates' : 'Date not confirmed') + ' · ' + i + ' of ' + n + ' sources';
+    }, done);
   }
   function exportSession() {
     var data = { exported: new Date().toISOString(), query: state.query, picks: state.picks, notes: state.notes, categories: state.cats, assigned: state.cat, onMap: state.onMap, connections: state.edges, gathered: state.run && state.run.gathered, added: state.added };
@@ -397,6 +522,7 @@
     renderPanel();
     markOpenRow();
     drawMap(0);
+    if (corr) corr.highlight(id);
     var c = $('panel-close'); if (c) c.focus({ preventScroll: true });
   }
   function closePanel() {
@@ -405,9 +531,11 @@
     renderPanel();
     markOpenRow();
     drawMap(0);
+    if (corr) corr.highlight(null);
     if (opener) {
       var back = $('screen').querySelector('[data-action="open"][data-id="' + opener + '"]');
       if (back) back.focus({ preventScroll: true });
+      else if (corr) corr.focus(opener);
     }
   }
   function markOpenRow() {
@@ -427,7 +555,7 @@
     var url = safeUrl(e.url);
     var body = '<div class="panel-top"><span class="muted small">' + esc(S.CLASS_LABELS[e.cls]) + ' · ' + esc(e.format) + '</span>' +
       '<button type="button" id="panel-close" class="icon" data-action="close" aria-label="Close source">×</button></div>' +
-      (state.screen === 4 ? categoryControls(e) : '') +
+      (state.screen >= 4 ? categoryControls(e) : '') +
       '<h2 class="panel-title">' + esc(e.title) + '</h2>' +
       '<p class="muted small">' + esc(e.publisher) + ' · ' + esc(fmtDate(e.published)) + (e.lang !== 'Unknown' ? ' · ' + esc(e.lang) : '') + '</p>' +
       (url ? '<p><a class="open-link" href="' + esc(url) + '" target="_blank" rel="noopener">Open the original ↗</a></p>' : '');
@@ -455,7 +583,7 @@
     $('note').addEventListener('input', function () { state.notes[e.id] = this.value; save(); });
     var catSel = $('cat-select');
     if (catSel) catSel.addEventListener('change', function () {
-      state.cat[e.id] = this.value; save(); renderWsList(); drawMap(0);
+      state.cat[e.id] = this.value; save(); refreshAfterEdit();
     });
     var newCat = $('cat-form');
     if (newCat) newCat.addEventListener('submit', function (ev) {
@@ -463,7 +591,7 @@
       var name = $('cat-new').value.trim();
       if (name && state.cats.indexOf(name) < 0) state.cats.push(name);
       if (name) state.cat[e.id] = name;
-      save(); renderPanel(); renderWsList(); renderKey(); drawMap(0);
+      save(); renderPanel(); refreshAfterEdit();
     });
     var edgeForm = $('edge-form');
     if (edgeForm) edgeForm.addEventListener('submit', function (ev) {
@@ -571,6 +699,13 @@
       var link = LINKS.filter(function (l) { return l.a === parts[0] && l.b === parts[1]; })[0];
       return addEdge(link.a, link.b, RELATIONS.indexOf(link.rel) >= 0 ? link.rel : 'Other', link.why);
     }
+    if (a === 'corr-view') {
+      state.corr.mode = t.getAttribute('data-value'); save();
+      Array.prototype.forEach.call($('screen').querySelectorAll('[data-action="corr-view"]'), function (b) { b.setAttribute('aria-pressed', b === t); });
+      $('corr-play').textContent = 'Replay in order published';
+      renderCorrControls(); return drawCorr(true);
+    }
+    if (a === 'corr-play') return toggleReplay();
     if (a === 'export') return exportSession();
     if (a === 'restart') {
       if (!window.confirm('Clear this session and start over?')) return;
