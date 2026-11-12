@@ -17,6 +17,16 @@
     <aside id="panel" class="panel" hidden aria-label="Source details"></aside>
   </div>
 
+  <!-- an in-page confirm: some embedded browsers block window.confirm, which silently cancels -->
+  <dialog id="restart-dialog" aria-labelledby="restart-title">
+    <h2 id="restart-title">Start over?</h2>
+    <p>This clears your scope, picks, search results, categories, connections and notes.</p>
+    <div class="row">
+      <button type="button" class="primary" data-action="restart-confirm">Clear and start over</button>
+      <button type="button" data-action="restart-cancel">Cancel</button>
+    </div>
+  </dialog>
+
   <script src="data/catalog.js"></script>
   <script src="scraper.js"></script>
   <script src="graph.js"></script>

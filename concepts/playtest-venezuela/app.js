@@ -707,8 +707,10 @@
     }
     if (a === 'corr-play') return toggleReplay();
     if (a === 'export') return exportSession();
-    if (a === 'restart') {
-      if (!window.confirm('Clear this session and start over?')) return;
+    if (a === 'restart') return $('restart-dialog').showModal();
+    if (a === 'restart-cancel') return $('restart-dialog').close();
+    if (a === 'restart-confirm') {
+      $('restart-dialog').close();
       timers.forEach(clearTimeout); timers = [];
       state = fresh();
       view.panel = null; view.seedClass = 'all'; view.seedText = ''; view.error = null; view.outOfScope = false;
@@ -727,6 +729,7 @@
   document.addEventListener('keydown', function (ev) {
     if (ev.key !== 'Escape') return;
     if ($('add-dialog') && $('add-dialog').open) return;
+    if ($('restart-dialog').open) return;
     if (view.picking) { view.picking = false; renderPanel(); drawMap(0); return; }
     if (view.panel) closePanel();
   });
