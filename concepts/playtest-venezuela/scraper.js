@@ -95,6 +95,16 @@
     return out;
   }
 
+  // Whose voices a source carries: its own (for official statements) plus every quoted speaker's.
+  // Returns distinct VOICES keys in first-seen order. Speakers missing from the table count as 'unknown'.
+  function voices(e, speakers) {
+    var out = [];
+    function add(v) { if (v && out.indexOf(v) < 0) out.push(v); }
+    add(e.voice);
+    (e.claims || []).forEach(function (c) { add((speakers[c.by] || { voice: 'unknown' }).voice); });
+    return out;
+  }
+
   // per selection/entry
   function profile(entries) {
     function tally(get) {
@@ -176,7 +186,7 @@
   var api = {
     CLASSES: CLASSES, CLASS_LABELS: CLASS_LABELS,
     inScope: inScope, parseWindow: parseWindow, windowStatus: windowStatus,
-    search: search, signals: signals, profile: profile, expand: expand, gaps: gaps
+    search: search, signals: signals, voices: voices, profile: profile, expand: expand, gaps: gaps
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.MockScraper = api;

@@ -3,9 +3,11 @@
   "private": true,
   "scripts": {
     "build:annotate": "esbuild dev/annotate.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\\\"production\\\" --outfile=dev/annotate.bundle.js",
-    "test": "node test.js"
+    "test": "node test.js",
+    "build:art": "esbuild art/scope-art.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\\\"production\\\" --outfile=art/scope-art.bundle.js"
   },
   "devDependencies": {
+    "@figma/expressive-components": "^0.2.0",
     "agentation": "^3.1.2",
     "esbuild": "^0.28.2",
     "react": "^19.3.1",

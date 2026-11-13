@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "playtest-venezuela",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-I", "-c", "import os, functools, http.server as h; h.test(HandlerClass=functools.partial(h.SimpleHTTPRequestHandler, directory='/Users/kellysu/Documents/GitHub/un-dppa-innovation/concepts/playtest-venezuela'), port=int(os.environ.get('PORT', 8790)))"],
+      "port": 8790
+    }
+  ]
+}

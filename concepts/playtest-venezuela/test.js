@@ -72,6 +72,24 @@ test('gaps list empty classes and known gaps', function () {
   assert.ok(g.indexOf('Local media') >= 0 && g.indexOf('Court documents') >= 0);
   assert.ok(g.indexOf('Traditional media') < 0);
 });
+test('every quoted speaker has a known voice', function () {
+  var SP = globalThis.SPEAKERS, V = globalThis.VOICES;
+  CATALOG.forEach(function (e) {
+    (e.claims || []).forEach(function (c) { assert.ok(SP[c.by], e.id + ': no SPEAKERS entry for "' + c.by + '"'); });
+  });
+  Object.keys(SP).forEach(function (k) { assert.ok(V[SP[k].voice], k + ' -> ' + SP[k].voice); });
+});
+test('official statements say whose voice they are', function () {
+  CATALOG.filter(function (e) { return e.origin === 'official statement'; }).forEach(function (e) {
+    assert.ok(globalThis.VOICES[e.voice], e.id);
+  });
+});
+test('voices separate governments from the UN', function () {
+  var SP = globalThis.SPEAKERS;
+  assert.deepStrictEqual(S.voices(byId('razon-cabello'), SP), ['ve-gov']);
+  assert.deepStrictEqual(S.voices(byId('un-news'), SP), ['un', 've-gov']);
+  assert.deepStrictEqual(S.voices({ claims: [{ by: 'Someone new' }] }, SP), ['unknown']);
+});
 
 console.log(failed ? '\n' + failed + ' failed' : '\nall passed');
 process.exit(failed ? 1 : 0);

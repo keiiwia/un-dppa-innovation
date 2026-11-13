@@ -4,13 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Source Gatherer Playtest</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="bar">
+    <img class="logo" src="assets/img/dppa-logo.png" alt="DPPA: Preventing Conflict. Sustaining Peace" width="90" height="117">
     <nav id="steps" class="steps" aria-label="Steps"></nav>
     <button type="button" class="link" data-action="restart">Start over</button>
   </header>
+
+  <!-- Full-screen map behind the "Where" question -->
+  <div id="where-map" class="where-map" hidden aria-label="Map"></div>
+  <!-- Live scope illustration (WebGPU). Stays hidden where it cannot run, leaving the static image. -->
+  <div id="art" class="art" hidden aria-hidden="true"></div>
 
   <div id="shell" class="shell">
     <main id="screen" class="screen" tabindex="-1"></main>
@@ -28,8 +35,12 @@
   </dialog>
 
   <script src="data/catalog.js"></script>
+  <script src="data/team.js"></script>
   <script src="scraper.js"></script>
   <script src="graph.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="where-map.js"></script>
+  <script src="art/scope-art.bundle.js"></script>
   <!-- screen 5: d3 for layout and transitions, topojson for the map outline -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>

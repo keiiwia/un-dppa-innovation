@@ -10,6 +10,7 @@
 // format    what the item is
 // origin    how it knows: wire | original reporting | official statement | analysis | fact-check | monitor | user-generated | social post (via report)
 // who       who is named as speaking for it: named | pseudonymous | not stated
+// voice     official statements only: whose voice it is, a key of VOICES (e.g. 've-gov'). See SPEAKERS at the end for claims.
 // term      words it uses for the event, only where the text was actually read
 // topics    operation | casualties | legality | framing | transition | press | misinformation | court | congress | opposition | background
 // seed      true = offered on the selection screen. The rest are only "found" by the mock scraper after selection.
@@ -142,14 +143,14 @@
     { id: 'state-crisis', title: 'Venezuela: A Democratic Crisis',
       url: 'https://2017-2021.state.gov/a-democratic-crisis-in-venezuela/',
       publisher: 'US State Department (archive)', published: null, dateNote: 'Archived site of the 2017–2021 administration, so it predates the window. Exact date unknown.', dateBefore: true, cls: 'un', format: 'Government page', lang: 'English', added: 'team', read: 'none',
-      origin: 'official statement', who: 'not stated', topics: ['background'], seed: true,
+      origin: 'official statement', voice: 'us-gov', who: 'not stated', topics: ['background'], seed: true,
       summary: 'The page returned an error, so only the title and its archive address are known. Useful as background on an earlier US position, not as reporting on January 2026.', claims: [] },
 
     // ---------- UN and institutional ----------
     { id: 'un-news', title: 'UN chief deeply concerned over \'possible intensification of instability\' in Venezuela',
       url: 'https://news.un.org/en/story/2026/01/1166701',
       publisher: 'UN News', published: '2026-01-05', cls: 'un', format: 'News article', lang: 'English', added: 'research', read: 'direct',
-      origin: 'official statement', who: 'named', term: ['seizure', 'rendition'], topics: ['legality', 'casualties', 'framing'], seed: true,
+      origin: 'official statement', voice: 'un', who: 'named', term: ['seizure', 'rendition'], topics: ['legality', 'casualties', 'framing'], seed: true,
       summary: 'The Secretary-General\'s remarks, delivered through Rosemary DiCarlo, to the emergency Security Council meeting. Raises concern about the UN Charter and regional instability. Notes the scale of casualties is unclear.',
       claims: [
         { by: 'António Guterres', text: 'Rules on the use of force were not respected in the Jan 3 action; it risks a dangerous precedent.' },
@@ -158,7 +159,7 @@
     { id: 'un-live', title: 'Security Council LIVE: \'The power of the law must prevail\' amid Venezuela crisis, says Guterres',
       url: 'https://www.un.org/en/security-council-live-world-powers-confront-%E2%80%98dangerous%E2%80%99-turning-point-venezuela',
       publisher: 'United Nations', published: '2026-01-05', cls: 'un', format: 'Live blog', lang: 'English', added: 'research', read: 'search',
-      origin: 'official statement', who: 'named', topics: ['legality', 'framing'],
+      origin: 'official statement', voice: 'un', who: 'named', topics: ['legality', 'framing'],
       summary: 'Live coverage of the emergency session, known here from search-result text. Member states set out opposing legal readings of the operation.',
       claims: [
         { by: 'Mike Waltz', text: 'The US described a law-enforcement action in pursuit of long-standing indictments.' },
@@ -258,7 +259,7 @@
     { id: 'razon-cabello', title: 'Diosdado Cabello afirma que hasta ahora son 100 los fallecidos en el ataque de EU a Venezuela',
       url: 'https://www.razon.com.mx/mundo/2026/01/07/diosdado-cabello-afirma-que-hasta-ahora-son-100-los-fallecidos-en-el-ataque-de-eu-a-venezuela/',
       publisher: 'La Razón (Mexico)', published: '2026-01-07', cls: 'regional', format: 'News article', lang: 'Spanish', added: 'research', read: 'search',
-      origin: 'official statement', who: 'named', term: ['ataque'], topics: ['casualties'],
+      origin: 'official statement', voice: 've-gov', who: 'named', term: ['ataque'], topics: ['casualties'],
       summary: 'Reports the interior minister\'s preliminary count, known from search-result text.',
       claims: [{ by: 'Diosdado Cabello', text: '100 deaths counted so far.' }] },
     { id: 'democracynow', title: 'Venezuela\'s military announces 24 security officers were killed in US attack',
@@ -432,4 +433,75 @@
     { a: 'telemundo-court', b: 'amny-court', rel: 'Same event', why: 'Both cover the Jan 5 arraignment.' },
     { a: 'about-that', b: 'aljazeera-delcy', rel: 'Same subject', why: 'Both use kidnap or abduct language.' }
   ];
+
+  // Whose voice a claim carries. Separates governments (and whose) from the UN, the press, and everyone else.
+  // kind: government | legislature | state media | intergovernmental | court | press | verification | expert | civil society | unknown
+  root.VOICES = {
+    'us-gov':      { label: 'US government', kind: 'government' },
+    'us-congress': { label: 'US Congress', kind: 'legislature' },
+    've-gov':      { label: 'Venezuelan government', kind: 'government' },
+    'cu-gov':      { label: 'Cuban government', kind: 'government' },
+    'ru-state':    { label: 'Russian state media', kind: 'state media' },
+    'un':          { label: 'United Nations', kind: 'intergovernmental' },
+    'court':       { label: 'Court records', kind: 'court' },
+    'press':       { label: 'News outlets', kind: 'press' },
+    'verify':      { label: 'Fact-checkers and OSINT', kind: 'verification' },
+    'expert':      { label: 'Academics and analysts', kind: 'expert' },
+    'civil':       { label: 'Civil society and residents', kind: 'civil society' },
+    'unknown':     { label: 'Affiliation not confirmed', kind: 'unknown' }
+  };
+
+  // Every claim's `by` value -> its voice. Assigned by hand for the playtest; a real scraper would need to infer this.
+  // role: what the speaker is, where the catalog states it. via: who relayed the claim, when it came second-hand.
+  root.SPEAKERS = {
+    'Donald Trump':                              { voice: 'us-gov', role: 'US President' },
+    'Marco Rubio':                               { voice: 'us-gov', role: 'Secretary of State' },
+    'Mike Waltz':                                { voice: 'us-gov', role: 'US ambassador to the UN' },
+    'Gen. Dan Caine':                            { voice: 'us-gov', role: 'Chairman of the Joint Chiefs' },
+    'Department of War official':                { voice: 'us-gov', role: 'Unnamed official' },
+    'Administration official':                   { voice: 'us-gov', role: 'Unnamed official' },
+    'US Department of Defense, per Bellingcat':  { voice: 'us-gov', via: 'Bellingcat' },
+    'Sen. Chris Murphy':                         { voice: 'us-congress', role: 'Senator' },
+    'Rep. Jim Himes':                            { voice: 'us-congress', role: 'Representative' },
+    'Nicolás Maduro':                            { voice: 've-gov', role: 'President, in US custody' },
+    'Delcy Rodríguez':                           { voice: 've-gov', role: 'Vice President, then acting leader' },
+    'Diosdado Cabello':                          { voice: 've-gov', role: 'Interior minister' },
+    'Diosdado Cabello, via Reuters':             { voice: 've-gov', role: 'Interior minister', via: 'Reuters' },
+    'Samuel Moncada':                            { voice: 've-gov', role: 'Ambassador to the UN' },
+    'Venezuelan government':                     { voice: 've-gov' },
+    'Venezuela':                                 { voice: 've-gov', role: 'At the Security Council' },
+    'Cuban government':                          { voice: 'cu-gov' },
+    'Granma':                                    { voice: 'cu-gov', role: 'Communist Party newspaper' },
+    'eKantipur, on RT and TASS':                 { voice: 'ru-state', via: 'eKantipur' },
+    'António Guterres':                          { voice: 'un', role: 'Secretary-General' },
+    'United Nations':                            { voice: 'un' },
+    'Reported court record':                     { voice: 'court', via: 'news report' },
+    'Indictment, per the article':               { voice: 'court', via: 'news report' },
+    'AP':                                        { voice: 'press' },
+    'AFP':                                       { voice: 'press' },
+    'CBS News':                                  { voice: 'press' },
+    'LiveNOW from FOX':                          { voice: 'press' },
+    'MercoPress':                                { voice: 'press' },
+    'Roll Call':                                 { voice: 'press' },
+    'Search-result text':                        { voice: 'press', role: 'Article text, not a named speaker' },
+    'AAP FactCheck':                             { voice: 'verify' },
+    'BBC Verify':                                { voice: 'verify' },
+    'CBS News Confirmed':                        { voice: 'verify' },
+    'Chequeado':                                 { voice: 'verify' },
+    'Bellingcat':                                { voice: 'verify' },
+    'NewsGuard, via AFP':                        { voice: 'verify', via: 'AFP' },
+    'CSIS authors':                              { voice: 'expert' },
+    'Marc Weller':                               { voice: 'expert', role: 'International lawyer' },
+    'David Scheffer':                            { voice: 'expert', role: 'International lawyer' },
+    'SNTP':                                      { voice: 'civil', role: 'Venezuelan press workers\' union' },
+    'Monitor de Víctimas':                       { voice: 'civil', role: 'Independent casualty tally' },
+    'Rights groups, per NPR':                    { voice: 'civil', via: 'NPR' },
+    'Residents (pseudonyms)':                    { voice: 'civil', role: 'Not named, at their request' },
+    'Nahum Fernández':                           { voice: 'unknown', role: 'Quoted by CBS without an affiliation' }
+  };
+
+  // Who backs each publisher, keyed by the entry's `publisher` text. Empty for now: fill in from research, not from memory.
+  // Fields (all optional): type ("Commercial news outlet"), country, owner, funding, ties (links to a party in the event).
+  // The source panel shows "not recorded yet" for publishers missing here.
+  root.PUBLISHERS = {};
 })(typeof window !== 'undefined' ? window : globalThis);
