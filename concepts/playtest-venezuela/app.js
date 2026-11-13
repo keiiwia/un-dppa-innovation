@@ -144,8 +144,6 @@
     var hash = '#' + STEPS[state.screen - 1].toLowerCase();
     if (location.hash !== hash) location.replace(hash);
     document.body.setAttribute('data-screen', state.screen);
-    // Scope, Search and Select share the floating header (logo and pagination laid over the page)
-    if (state.screen <= 3) document.body.setAttribute('data-float', ''); else document.body.removeAttribute('data-float');
     renderSteps();
     graph = null;
     if (corr) { corr.destroy(); corr = null; }
@@ -240,13 +238,13 @@
       '<span class="sr">' + c.label + '</span>' +
       '<input id="in-' + c.key + '" data-col="' + c.key + '" type="text" autocomplete="off" placeholder="' + esc(c.placeholder) + '"></label>' +
       (c.key === 'where' ? '<ul id="where-results" class="results" hidden aria-label="Places found"></ul>' : '') +
-      (c.key === 'where' && mapMode() ? '<p class="map-tip">Search for a place, or click it on the map. Zoom in to pick a region or a town.</p>' : '') +
       '<ul class="tokens">' + tokens.map(function (t, i) {
         return '<li><button type="button" class="token" data-action="untoken" data-col="' + c.key + '" data-i="' + i + '" aria-label="Remove ' + esc(t) + '">' + esc(t) + ' <span aria-hidden="true">×</span></button></li>';
       }).join('') + '</ul>';
   }
   // "Where" is asked over a full-screen map when the map library has loaded
   function mapMode() { return state.screen === 1 && scopeCol().key === 'where' && !!(window.WhereMap && window.WhereMap.available); }
+  var SCOPE_LOGO = '<img class="scope-logo" src="assets/img/dppa-logo.png" alt="DPPA: Preventing Conflict. Sustaining Peace" width="82" height="106">';
   function renderScope() {
     // keep "Still needed" current as fields get filled, once it has been shown
     if (view.error && view.error.indexOf('Still needed') === 0) {
@@ -256,7 +254,8 @@
     var c = scopeCol(), step = state.scopeStep, last = step === SCOPE_ORDER.length - 1, onMap = mapMode();
     var unused = SC.suggestions[c.key].filter(function (s) { return state.query[c.key].indexOf(s) < 0; });
     $('screen').innerHTML =
-      '<form id="scope-form" class="scope' + (onMap ? ' scope-map' : '') + '" novalidate><div class="scope-main">' +
+      // The large DPPA logo belongs to the scope pages: above the question, or above the card on the map
+      '<form id="scope-form" class="scope' + (onMap ? ' scope-map' : '') + '" novalidate>' + (onMap ? SCOPE_LOGO : '') + '<div class="scope-main">' + (onMap ? '' : SCOPE_LOGO) +
       '<h1 class="scope-q">' + esc(c.question) + '</h1><div class="rule" aria-hidden="true"></div>' +
       '<div class="scope-body">' + (c.key === 'when' ? whenField() : textField(c)) +
       (unused.length ? '<div class="suggest">' + unused.map(function (s) {
