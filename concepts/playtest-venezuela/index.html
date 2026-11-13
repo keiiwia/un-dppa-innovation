@@ -17,9 +17,24 @@
     <aside id="panel" class="panel" hidden aria-label="Source details"></aside>
   </div>
 
+  <!-- an in-page confirm: some embedded browsers block window.confirm, which silently cancels -->
+  <dialog id="restart-dialog" aria-labelledby="restart-title">
+    <h2 id="restart-title">Start over?</h2>
+    <p>This clears your scope, picks, search results, categories, connections and notes.</p>
+    <div class="row">
+      <button type="button" class="primary" data-action="restart-confirm">Clear and start over</button>
+      <button type="button" data-action="restart-cancel">Cancel</button>
+    </div>
+  </dialog>
+
   <script src="data/catalog.js"></script>
   <script src="scraper.js"></script>
   <script src="graph.js"></script>
+  <!-- screen 5: d3 for layout and transitions, topojson for the map outline -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+  <script src="data/places.js"></script>
+  <script src="correlations.js"></script>
   <script src="app.js"></script>
   <script>
     // annotation toolbae local 
